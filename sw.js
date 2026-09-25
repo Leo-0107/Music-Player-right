@@ -50,7 +50,10 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
           return response;
         })
-        .catch(() => cached || caches.match("./index.html"));
+        .catch(() => {
+          if (request.mode === "navigate") return caches.match("./index.html");
+          return Response.error();
+        });
     })
   );
 });
