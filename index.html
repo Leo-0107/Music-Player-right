@@ -787,7 +787,7 @@ input[type="range"] {
         <div class="sectionCard">
           <div class="sectionTitle">波形ビジュアル表示</div>
           <div class="controls" id="waveModeBtns">
-            <button class="btn small active" data-wave="simple">シンプル</button>
+            <button class="btn small active" data-wave="simple">2D (シンプル)</button>
             <button class="btn small" data-wave="3d">3D (立体波形)</button>
           </div>
         </div>
@@ -795,13 +795,13 @@ input[type="range"] {
         <div class="sectionCard">
           <div class="sectionTitle">立体音響モード (2D〜16D)</div>
           <div class="controls" id="dModeBtns">
-            <button class="btn small active" data-d="2D">2D (通常)</button>
-            <button class="btn small" data-d="3D">3D</button>
+            <button class="btn small" data-d="2D">2D (通常)</button>
+            <button class="btn small active" data-d="3D">3D</button>
             <button class="btn small" data-d="4D">4D</button>
             <button class="btn small" data-d="8D">8D</button>
             <button class="btn small" data-d="16D">16D</button>
           </div>
-          <div style="font-size:.78rem; color:var(--muted); margin-top:6px" id="dModeDesc">2D: 標準ステレオ再生</div>
+          <div style="font-size:.78rem; color:var(--muted); margin-top:6px" id="dModeDesc">3D: 左右パン連動の固定立体音響</div>
           
           <div class="meter" style="margin-top:12px">
             <span>左右手動パン (2D/3D時)</span>
@@ -1140,6 +1140,16 @@ input[type="range"] {
     });
   }
 
+  function clearTracksFromDB() {
+    return new Promise(resolve => {
+      if (!db) return resolve();
+      const tx = db.transaction("tracks", "readwrite");
+      tx.objectStore("tracks").clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  }
+
   function loadTracksFromDB() {
     return new Promise(resolve => {
       if (!db) return resolve([]);
@@ -1255,8 +1265,8 @@ input[type="range"] {
     playlists: loadJSON(STORAGE.playlists, {}),
     crossfade: loadBool(STORAGE.crossfade, true),
     silenceSkip: loadBool(STORAGE.silenceSkip, true),
-    dMode: loadStr(STORAGE.dMode, "2D"),
-    waveMode: loadStr(STORAGE.waveMode, "3d"),
+    dMode: loadStr(STORAGE.dMode, "3D"),
+    waveMode: loadStr(STORAGE.waveMode, "simple"),
     panValue: 0,
     menuOpen: false
   };
@@ -1910,26 +1920,11 @@ input[type="range"] {
     ctx.fillText("NO IMAGE", 160, 160);
   }
 
-  el.btnResetFiles.addEventListener("click", () => {
-    if (!confirm("保存された全トラックを削除しますか？")) return;
-    if (db) {
-      const tx = db.transaction("tracks", "readwrite");
-      tx.objectStore("tracks").clear();
-    }
-    state.playlist = [];
-    state.currentSong = null;
-    state.queue = [];
-    audio.pause();
-    audio.src = "";
-    el.folder.value = "";
-    updateArtwork(null);
-    updateTitleTextAndScroll(el.nowTitle, "未再生");
-    updateTitleTextAndScroll(el.nowSub, "ファイルをドロップまたは選択してください");
-    updateTitleTextAndScroll(el.miniTitle, "停止中");
-    updateTitleTextAndScroll(el.miniSub, "ファイル未選択");
-    saveState();
-    renderAll();
-    toast("全ファイルをリセットしました");
+  el.btnResetFiles.addEventListener("click", async () => {
+    if (!confirm("保存された全トラックとすべての設定を初期状態に戻しますか？")) return;
+    await clearTracksFromDB();
+    Object.values(STORAGE).forEach(key => localStorage.removeItem(key));
+    window.location.reload();
   });
 
   async function loadFiles(fileList){
