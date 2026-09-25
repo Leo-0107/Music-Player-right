@@ -2110,6 +2110,30 @@ input[type="range"] {
     updatePlayPauseUI();
   }
 
+  function stopSleepTimer() {
+    if (sleepTimerId) clearTimeout(sleepTimerId);
+    sleepTimerId = null;
+    sleepTimerEnd = null;
+    state.timerSec = 0;
+    el.timerStatus.textContent = "タイマーOFF";
+    document.querySelectorAll("[data-timer]").forEach(button => {
+      button.classList.toggle("active", button.dataset.timer === "off");
+    });
+  }
+
+  function startSleepTimer(minutes) {
+    if (sleepTimerId) clearTimeout(sleepTimerId);
+    state.timerSec = minutes * 60;
+    sleepTimerEnd = Date.now() + state.timerSec * 1000;
+    sleepTimerId = setTimeout(() => {
+      audio.pause();
+      updatePlayPauseUI();
+      stopSleepTimer();
+      toast("スリープタイマーで停止しました");
+    }, state.timerSec * 1000);
+    el.timerStatus.textContent = `残り: ${minutes}分`;
+  }
+
   function prevTrack(){
     if(historyIndex > 0) {
       historyIndex--;
@@ -2858,10 +2882,7 @@ input[type="range"] {
       if (remain === 0) {
         audio.pause();
         updatePlayPauseUI();
-        state.timerSec = 0;
-        sleepTimerEnd = null;
-        el.timerStatus.textContent = "タイマーOFF";
-        document.querySelectorAll("[data-timer]").forEach(b => b.classList.toggle("active", b.dataset.timer==="off"));
+        stopSleepTimer();
         toast("スリープタイマーで停止しました");
       }
     }
@@ -2939,13 +2960,9 @@ input[type="range"] {
       btn.classList.add("active");
       const val = btn.dataset.timer;
       if (val === "off") {
-        state.timerSec = 0;
-        sleepTimerEnd = null;
-        el.timerStatus.textContent = "タイマーOFF";
+        stopSleepTimer();
       } else {
-        state.timerSec = parseInt(val) * 60;
-        sleepTimerEnd = Date.now() + state.timerSec * 1000;
-        el.timerStatus.textContent = `残り: ${val}分`;
+        startSleepTimer(parseInt(val, 10));
         toast(`${val}分後に停止します`);
       }
     });

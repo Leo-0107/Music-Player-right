@@ -1,7 +1,7 @@
-const CACHE_NAME = "music-player-v1";
+const CACHE_NAME = "music-player-v2";
 const APP_SHELL = [
   "./",
-  "./music.html",
+  "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
@@ -50,7 +50,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
           return response;
         })
-        .catch(() => cached || caches.match("./music.html"));
+        .catch(() => cached || caches.match("./index.html"));
     })
   );
 });
