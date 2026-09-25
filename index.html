@@ -1110,6 +1110,8 @@ input[type="range"] {
     "#7209b7", "#f72585", "#121212", "#ffffff"
   ];
 
+  // Increase this value for each user-visible code change so no-cover artwork shows the deployed revision.
+  const BUILD_REVISION = 1;
   const dbName = "Music Player v3.8";
   let db = null;
   function initDB() {
@@ -1917,7 +1919,7 @@ input[type="range"] {
     ctx.font = "bold 48px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("NO IMAGE", 160, 160);
+    ctx.fillText(`NO IMAGE #${BUILD_REVISION}`, 160, 160);
   }
 
   el.btnResetFiles.addEventListener("click", async () => {
